@@ -1,5 +1,7 @@
 # Luna Fiora
 
+![Status: not yet usable](https://img.shields.io/badge/Status-not_yet_usable-D73A49)
+
 > **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
 
 Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: Streamlit UI,
