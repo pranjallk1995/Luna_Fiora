@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 import httpx
 import streamlit as st
 from auth import OIDCAuthentication
@@ -49,7 +50,7 @@ class LunaFioraApp:
         self.NAV[nav or labels[0]][1](self.api, dashboard)
     @classmethod
     def run(cls):
-        st.set_page_config(page_title="Luna Fiora", page_icon="◌", layout="wide", initial_sidebar_state="collapsed")
+        st.set_page_config(page_title="Luna Fiora", page_icon=str(Path(__file__).parent / "assets" / "lunafiora_logo.png"), layout="wide", initial_sidebar_state="collapsed")
         cls().render()
 
 if __name__ == "__main__":
