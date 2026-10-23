@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lunafiora
+      POSTGRES_USER: lunafiora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lunafiora-dev}
+      TZ: Asia/Kolkata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      sentia_network:
+        aliases: [luna-fiora-db]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lunafiora -d lunafiora"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mcp:
+    build: ./mcp
+    working_dir: /workspace/mcp
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-fiora-db:5432/lunafiora
+      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18003}
+      OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5vl:7b}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID:-}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET:-}
+      GMAIL_REDIRECT_URI: ${GMAIL_REDIRECT_URI:-http://localhost:18003/api/gmail/callback}
+      FIORA_TOKEN_ENCRYPTION_KEY: ${FIORA_TOKEN_ENCRYPTION_KEY:-}
+      GMAIL_POLL_MINUTES: ${GMAIL_POLL_MINUTES:-15}
+      TZ: Asia/Kolkata
+    ports: ["127.0.0.1:18003:8000"]
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./mcp/app
+          target: /workspace/mcp/app
+          ignore:
+            - __pycache__/
+            - "*.py[cod]"
+        - action: rebuild
+          path: ./mcp/requirements.txt
+        - action: rebuild
+          path: ./mcp/Dockerfile
+    networks:
+      sentia_network:
+        aliases: [luna-fiora-mcp]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ui:
+    build: ./ui
+    working_dir: /workspace/ui
+    restart: unless-stopped
+    environment:
+      LUNAFIORA_API_URL: http://luna-fiora-mcp:8000
+      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
+      LUNAFIORA_ALLOWED_EMAILS: ${LUNAFIORA_ALLOWED_EMAILS:?Set LUNAFIORA_ALLOWED_EMAILS}
+      TZ: Asia/Kolkata
+    volumes:
+      - ./ui/.streamlit/secrets.toml:/workspace/ui/.streamlit/secrets.toml:ro
+    ports: ["127.0.0.1:18504:8501"]
+    develop:
+      watch:
+        - action: sync
+          path: ./ui
+          target: /workspace/ui
+          ignore:
+            - __pycache__/
+            - "*.py[cod]"
+            - requirements.txt
+            - Dockerfile
+            - .streamlit/secrets.toml
+        - action: rebuild
+          path: ./ui/requirements.txt
+        - action: rebuild
+          path: ./ui/Dockerfile
+    networks:
+      sentia_network:
+        aliases: [luna-fiora-ui]
+    depends_on:
+      mcp:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
+networks:
+  sentia_network:
+    external: true
+    name: luna_sentia_network

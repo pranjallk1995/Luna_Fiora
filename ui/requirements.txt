@@ -1,0 +1,6 @@
+Authlib==1.5.2
+streamlit>=1.50,<2
+httpx>=0.28,<1
+pandas>=2.2,<3
+plotly>=6,<7
+Pillow>=11,<12
