@@ -1,6 +1,7 @@
 mcp>=1.18,<2
 psycopg[binary,pool]>=3.2,<4
 pydantic>=2.10,<3
+langgraph>=1.2,<2
 httpx>=0.28,<1
 google-api-python-client>=2.180,<3
 google-auth>=2.40,<3
