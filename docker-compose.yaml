@@ -1,29 +1,10 @@
 services:
-  postgres:
-    image: postgres:17-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: lunafiora
-      POSTGRES_USER: lunafiora
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lunafiora-dev}
-      TZ: Asia/Kolkata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      sentia_network:
-        aliases: [luna-fiora-db]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lunafiora -d lunafiora"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   mcp:
     build: ./mcp
     working_dir: /workspace/mcp
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-fiora-db:5432/lunafiora
+      DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-sentia-db:5432/lunafiora
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
       MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18003}
       OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
@@ -50,9 +31,6 @@ services:
     networks:
       sentia_network:
         aliases: [luna-fiora-mcp]
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
       interval: 10s
@@ -92,9 +70,6 @@ services:
     depends_on:
       mcp:
         condition: service_healthy
-
-volumes:
-  postgres_data:
 
 networks:
   sentia_network:

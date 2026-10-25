@@ -5,8 +5,10 @@
 > **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
 
 Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: Streamlit UI,
-FastMCP/Python service, PostgreSQL, Google OIDC, and the shared
+FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, Google OIDC, and the shared
 `luna_sentia_network` created by [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia).
+
+> **Requires Luna Sentia, running and healthy:** Luna Fiora keeps its data in Luna Sentia's PostgreSQL (`luna-sentia-db`) and joins Sentia's `luna_sentia_network`; it has no database of its own. Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until its `postgres` and `ollama` services report healthy, as described under [Start](#start).
 
 ## Features
 
@@ -33,17 +35,24 @@ Streamlit UI or MCP client
         -> Luna Sentia Ollama only when deterministic parsing is inconclusive
 ```
 
-Fiora uses unique aliases `luna-fiora-db`, `luna-fiora-mcp`, and
-`luna-fiora-ui`. PostgreSQL is private and the service binds only to localhost.
+Fiora uses unique aliases `luna-fiora-mcp` and `luna-fiora-ui`. Its database lives in Luna Sentia's PostgreSQL (`luna-sentia-db`), which is private, and the service binds only to localhost.
 
 ## Start
 
-Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first. It creates the shared external
-`luna_sentia_network` that every Luna app joins:
+Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until it is healthy. Sentia runs
+the PostgreSQL server that holds Fiora's `lunafiora` database, serves the models,
+and creates the shared `luna_sentia_network` every Luna app joins. Fiora has no
+database of its own: started before Sentia is healthy, it cannot reach its
+data and keeps restarting until it can.
 
 ```sh
-cd ../Luna_Sentia && docker compose up -d
+cd ../Luna_Sentia
+docker compose up -d --wait postgres ollama adminer
+docker compose run --rm postgres-init   # creates the lunafiora role and database
+docker compose ps                       # postgres and ollama must show (healthy)
 ```
+
+See [Is Sentia healthy?](https://github.com/pranjallk1995/Luna_Sentia#is-sentia-healthy) if they do not.
 
 To start Sentia and every Luna app together, with or without Compose Watch, use
 `../luna.sh start [--watch]`; see the
@@ -105,9 +114,9 @@ Private Streamlit secrets and generated Python caches are excluded from sync.
 
 ## Database UI
 
-PostgreSQL is not published to the host. Inspect it with
+Fiora's database is in Luna Sentia's PostgreSQL, which is not published to the host. Inspect it with
 [Adminer in Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia#database-ui) at
-<http://127.0.0.1:19080>: System `PostgreSQL`, Server `luna-fiora-db`, Username
+<http://127.0.0.1:19080>: System `PostgreSQL`, Server `luna-sentia-db`, Username
 and Database `lunafiora`, Password your `POSTGRES_PASSWORD`.
 
 ## Privacy boundaries
