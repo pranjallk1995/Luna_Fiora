@@ -67,7 +67,7 @@ Create a private `.env` from `.env.example`. Generate a Fernet key for
 
 Fiora signs people in through Luna Sentia's single sign-on: one Google sign-in at
 Sentia opens every Luna app, and **Sign out** in any app signs out of all of them.
-The UI needs no Google client or `secrets.toml` of its own. Set `LUNA_SSO_URL` to
+The UI needs no Google client of its own. Set `LUNA_SSO_URL` to
 Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
 `LUNA_SSO_INTERNAL_URL` to `http://luna-sentia-auth:8000`, and
 `LUNAFIORA_ALLOWED_EMAILS` to the accounts allowed into Fiora; see
