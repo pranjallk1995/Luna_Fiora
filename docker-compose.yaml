@@ -42,12 +42,12 @@ services:
     working_dir: /workspace/ui
     restart: unless-stopped
     environment:
+      LUNA_SSO_URL: ${LUNA_SSO_URL:?Set LUNA_SSO_URL to Luna Sentia's public sign-on address}
+      LUNA_SSO_INTERNAL_URL: ${LUNA_SSO_INTERNAL_URL:-http://luna-sentia-auth:8000}
       LUNAFIORA_API_URL: http://luna-fiora-mcp:8000
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
       LUNAFIORA_ALLOWED_EMAILS: ${LUNAFIORA_ALLOWED_EMAILS:?Set LUNAFIORA_ALLOWED_EMAILS}
       TZ: Asia/Kolkata
-    volumes:
-      - ./ui/.streamlit/secrets.toml:/workspace/ui/.streamlit/secrets.toml:ro
     ports: ["127.0.0.1:18504:8501"]
     develop:
       watch:

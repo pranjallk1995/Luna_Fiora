@@ -2,7 +2,7 @@ from datetime import date
 from pathlib import Path
 import httpx
 import streamlit as st
-from auth import OIDCAuthentication
+from sso import LunaSingleSignOn
 from config import UIConfig
 from domain.dashboard import Dashboard
 from services.api import FioraAPI
@@ -30,10 +30,10 @@ class LunaFioraApp:
                 if isinstance(selected, (tuple, list)) and len(selected) == 2:
                     st.session_state.start, st.session_state.end = selected
             with logout:
-                st.button("Sign out", icon=":material/logout:", key="header_sign_out", on_click=st.logout, use_container_width=True)
+                st.button("Sign out", icon=":material/logout:", key="header_sign_out", on_click=LunaSingleSignOn.sign_out, use_container_width=True)
     def render(self):
         LunaStyle.apply()
-        OIDCAuthentication(self.config.allowed_emails).require_login()
+        LunaSingleSignOn(self.config.allowed_emails).require_login("Luna Fiora", "Private AI-managed personal finance")
         today = date.today()
         if "start" not in st.session_state:
             st.session_state.start = today.replace(day=1)

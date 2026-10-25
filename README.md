@@ -5,7 +5,7 @@
 > **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
 
 Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: Streamlit UI,
-FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, Google OIDC, and the shared
+FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single sign-on through Luna Sentia, and the shared
 `luna_sentia_network` created by [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia).
 
 > **Requires Luna Sentia, running and healthy:** Luna Fiora keeps its data in Luna Sentia's PostgreSQL (`luna-sentia-db`) and joins Sentia's `luna_sentia_network`; it has no database of its own. Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until its `postgres` and `ollama` services report healthy, as described under [Start](#start).
@@ -65,11 +65,13 @@ Fiora reaches Ollama at `http://luna-sentia-ollama:11434` (override with
 Create a private `.env` from `.env.example`. Generate a Fernet key for
 `FIORA_TOKEN_ENCRYPTION_KEY`; it encrypts Gmail refresh tokens at rest.
 
-Create `ui/.streamlit/secrets.toml` from the example and configure normal Luna
-Google sign-in:
-
-- Hosted: `https://fiora.lunaapps.fyi/oauth2callback`
-- Local: `http://localhost:18504/oauth2callback`
+Fiora signs people in through Luna Sentia's single sign-on: one Google sign-in at
+Sentia opens every Luna app, and **Sign out** in any app signs out of all of them.
+The UI needs no Google client or `secrets.toml` of its own. Set `LUNA_SSO_URL` to
+Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
+`LUNA_SSO_INTERNAL_URL` to `http://luna-sentia-auth:8000`, and
+`LUNAFIORA_ALLOWED_EMAILS` to the accounts allowed into Fiora; see
+[Single sign-on](https://github.com/pranjallk1995/Luna_Sentia#single-sign-on).
 
 For Gmail import, enable the Gmail API in Google Cloud and add a separate backend callback:
 
