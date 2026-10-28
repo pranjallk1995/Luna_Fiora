@@ -19,7 +19,7 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 - Required monthly-saving estimates for goals.
 - Read-only Gmail OAuth with periodic filtered transaction searches.
 - Deterministic bank-message parsing first; ambiguous messages use the local
-  `qwen2.5vl:7b` Ollama model served by Luna Sentia. Each message runs through a
+  `qwen3-vl:8b-instruct` Ollama model served by Luna Sentia. Each message runs through a
   LangGraph graph (`mcp/app/services/import_graph.py`): already imported →
   skip; otherwise parse, ask the model only if parsing fails, then import or
   record for review.

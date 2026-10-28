@@ -23,7 +23,7 @@ class AppConfig:
         return cls(
             database_url=os.environ["DATABASE_URL"], api_token=token,
             ollama_url=os.getenv("OLLAMA_URL", "http://luna-sentia-ollama:11434"),
-            ollama_model=os.getenv("OLLAMA_MODEL", "qwen2.5vl:7b"),
+            ollama_model=os.getenv("OLLAMA_MODEL", "qwen3-vl:8b-instruct"),
             gmail_client_id=os.getenv("GMAIL_CLIENT_ID", ""),
             gmail_client_secret=os.getenv("GMAIL_CLIENT_SECRET", ""),
             gmail_redirect_uri=os.getenv("GMAIL_REDIRECT_URI", "http://localhost:18003/api/gmail/callback"),
