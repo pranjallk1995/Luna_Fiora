@@ -27,6 +27,15 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 
 ## Architecture
 
+### Luna ecosystem
+
+![Luna ecosystem architecture](docs/luna-ecosystem.svg)
+
+Every Luna app is a Streamlit UI plus a FastMCP service on Luna Sentia's
+`luna_sentia_network`: its data lives in Sentia's PostgreSQL, people sign in
+through Sentia's `auth`, and model calls go to Sentia's Ollama. Orange lines are
+the calls between apps; the grey dashed line is the planned Lexia-to-Fiora link.
+
 ```text
 Streamlit UI or MCP client
         -> Luna Fiora MCP/API
