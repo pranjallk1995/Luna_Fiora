@@ -1,8 +1,22 @@
 import os
 from dataclasses import dataclass
+from typing import ClassVar
 
 @dataclass(frozen=True)
 class AppConfig:
+    GOOGLE_AUTH_URI: ClassVar[str] = "https://accounts.google.com/o/oauth2/auth"
+    GOOGLE_TOKEN_URI: ClassVar[str] = "https://oauth2.googleapis.com/token"
+    GMAIL_QUERY: ClassVar[str] = 'newer_than:45d (UPI OR debited OR credited OR transaction OR purchase OR EMI OR SIP)'
+    GMAIL_MAX_RESULTS: ClassVar[int] = 100
+    GMAIL_STATE_MAX_AGE_SECONDS: ClassVar[int] = 900
+    # The context every Luna app requests for Sentia's shared model; Ollama reloads a
+    # model whose context changes, so a different value swaps it out for the others.
+    OLLAMA_CONTEXT_TOKENS: ClassVar[int] = 16384
+    OLLAMA_TIMEOUT_SECONDS: ClassVar[float] = 90.0
+    # Longest part of an email body sent to the model.
+    EMAIL_BODY_CHARS: ClassVar[int] = 5000
+    DB_POOL_MAX_SIZE: ClassVar[int] = 8
+
     database_url: str
     api_token: str
     ollama_url: str

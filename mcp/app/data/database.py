@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+from app.core.config import AppConfig
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS transactions (
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS gmail_imports (
 """
 class Database:
     def __init__(self, url):
-        self.pool=ConnectionPool(url, min_size=1, max_size=8, open=False)
+        self.pool=ConnectionPool(url, min_size=1, max_size=AppConfig.DB_POOL_MAX_SIZE, open=False)
     def open(self): self.pool.open(wait=True)
     def close(self): self.pool.close()
     def initialize(self):

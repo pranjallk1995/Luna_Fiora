@@ -33,7 +33,7 @@ class LunaFioraApp:
                 st.button("Sign out", icon=":material/logout:", key="header_sign_out", on_click=LunaSingleSignOn.sign_out, use_container_width=True)
     def render(self):
         LunaStyle.apply()
-        LunaSingleSignOn(self.config.allowed_emails).require_login("Luna Fiora", "Private AI-managed personal finance")
+        LunaSingleSignOn(self.config.allowed_emails, self.config.sso).require_login("Luna Fiora", "Private AI-managed personal finance")
         today = date.today()
         if "start" not in st.session_state:
             st.session_state.start = today.replace(day=1)
