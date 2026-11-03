@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+from app.core import tenancy
 from app.core.config import AppConfig
+from app.data.tenants import TenantSchemas, use_space
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS transactions (
@@ -46,12 +48,15 @@ CREATE TABLE IF NOT EXISTS gmail_imports (
 class Database:
     def __init__(self, url):
         self.pool=ConnectionPool(url, min_size=1, max_size=AppConfig.DB_POOL_MAX_SIZE, open=False)
+        self.tenants=TenantSchemas(self.pool.connection, lambda connection: connection.execute(SCHEMA))
     def open(self): self.pool.open(wait=True)
     def close(self): self.pool.close()
     def initialize(self):
-        with self.cursor() as c: c.execute(SCHEMA)
+        self.tenants.adopt_public_tables()
     @contextmanager
     def cursor(self):
+        user_id=tenancy.current(); self.tenants.ensure(user_id)
         with self.pool.connection() as conn:
+            use_space(conn,user_id)
             with conn.cursor(row_factory=dict_row) as cursor:
                 yield cursor

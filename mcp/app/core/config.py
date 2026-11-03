@@ -26,6 +26,7 @@ class AppConfig:
     gmail_redirect_uri: str
     encryption_key: str
     poll_seconds: int
+    mcp_public_url: str = "http://localhost:18003"
     host: str = "0.0.0.0"
     port: int = 8000
 
@@ -36,6 +37,7 @@ class AppConfig:
             raise RuntimeError("LUNAFIORA_API_TOKEN must contain at least 32 characters")
         return cls(
             database_url=os.environ["DATABASE_URL"], api_token=token,
+            mcp_public_url=os.getenv("MCP_PUBLIC_URL", cls.mcp_public_url).strip().rstrip("/"),
             ollama_url=os.getenv("OLLAMA_URL", "http://luna-sentia-ollama:11434"),
             ollama_model=os.getenv("OLLAMA_MODEL", "qwen3-vl:8b-instruct"),
             gmail_client_id=os.getenv("GMAIL_CLIENT_ID", ""),

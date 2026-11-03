@@ -5,6 +5,9 @@ services:
     working_dir: /workspace/mcp
     restart: unless-stopped
     environment:
+      LUNA_SSO_URL: ${LUNA_SSO_URL:?Set LUNA_SSO_URL to Luna Sentia's public sign-on address}
+      LUNA_SSO_INTERNAL_URL: ${LUNA_SSO_INTERNAL_URL:-http://luna-sentia-auth:8000}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18003}
       DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-sentia-db:5432/lunafiora
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
       OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
