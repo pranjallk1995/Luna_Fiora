@@ -19,7 +19,7 @@ class LunaFioraApplication:
         extractor=OllamaExtractor(config.ollama_url,config.ollama_model)
         self.imports=GmailImportService(self.db,reader,extractor,config.encryption_key)
         self.oauth=GmailOAuth(config.gmail_client_id,config.gmail_client_secret,config.gmail_redirect_uri,config.api_token)
-        self.mcp=LunaMCP("LunaFiora",public_url=config.mcp_public_url,api_token=config.api_token,open_paths=("/api/gmail/callback",),
+        self.mcp=LunaMCP("LunaFiora",app="fiora",remove_user=self.db.tenants.remove,public_url=config.mcp_public_url,api_token=config.api_token,open_paths=("/api/gmail/callback",),
             host=config.host,port=config.port,stateless_http=True,json_response=True)
         FioraMCPTools(self.mcp,self.service,self.imports)
         FioraHTTPRoutes(self.mcp,self.service,self.imports,self.oauth,config.api_token)
