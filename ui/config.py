@@ -1,6 +1,10 @@
+"""Validated settings for the UI gateway and the browser app it serves."""
+
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar
+from urllib.parse import urlparse
 
 
 @dataclass(frozen=True)
@@ -13,6 +17,7 @@ class SSOConfig:
     # in another app takes effect here within this many seconds.
     RECHECK_SECONDS: ClassVar[int] = 60
     LOOKUP_TIMEOUT_SECONDS: ClassVar[float] = 5.0
+    SESSION_CACHE_ENTRIES: ClassVar[int] = 256
 
     public_url: str
     internal_url: str = "http://luna-sentia-auth:8000"
@@ -28,9 +33,41 @@ class SSOConfig:
 
 @dataclass(frozen=True)
 class UIConfig:
-    api_url:str; api_token:str; allowed_emails:frozenset[str]; sso:SSOConfig
-    api_timeout:float=90.0
+    """Immutable gateway settings."""
+
+    UI_ROOT: ClassVar[Path] = Path(__file__).resolve().parent
+    # The built React app; the Dockerfile puts it here.
+    STATIC_DIR: ClassVar[Path] = UI_ROOT / "static"
+    # A Gmail sync reads every new message, which can take a while.
+    API_TIMEOUT_SECONDS: ClassVar[float] = 90.0
+    MAX_REQUEST_BYTES: ClassVar[int] = 1024 * 1024
+    # Hashed bundles never change under the same name.
+    IMMUTABLE_CACHE_CONTROL: ClassVar[str] = "private, max-age=31536000, immutable"
+    CONTENT_SECURITY_POLICY: ClassVar[str] = (
+        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+        "object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    )
+
+    api_url: str
+    api_token: str
+    allowed_emails: frozenset[str]
+    sso: SSOConfig
+
     @classmethod
-    def from_env(cls):
-        emails=frozenset(x.strip().casefold() for x in os.environ["LUNAFIORA_ALLOWED_EMAILS"].split(",") if x.strip())
-        return cls(os.getenv("LUNAFIORA_API_URL","http://luna-fiora-mcp:8000").rstrip("/"),os.environ["LUNAFIORA_API_TOKEN"],emails,SSOConfig.from_env())
+    def from_env(cls) -> "UIConfig":
+        """Build and validate gateway configuration from environment variables."""
+        api_url = os.getenv("LUNAFIORA_API_URL", "http://luna-fiora-mcp:8000").rstrip("/")
+        parsed = urlparse(api_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise RuntimeError("LUNAFIORA_API_URL must be a valid HTTP(S) URL.")
+        api_token = os.getenv("LUNAFIORA_API_TOKEN", "").strip()
+        if not api_token:
+            raise RuntimeError("LUNAFIORA_API_TOKEN must be set.")
+        allowed_emails = frozenset(
+            email.strip().casefold()
+            for email in os.getenv("LUNAFIORA_ALLOWED_EMAILS", "").split(",")
+            if email.strip()
+        )
+        if not allowed_emails:
+            raise RuntimeError("LUNAFIORA_ALLOWED_EMAILS must list at least one account.")
+        return cls(api_url=api_url, api_token=api_token, allowed_emails=allowed_emails, sso=SSOConfig.from_env())

@@ -4,7 +4,7 @@
 
 > **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
 
-Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: Streamlit UI,
+Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: React UI,
 FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single sign-on through Luna Sentia, and the shared
 `luna_sentia_network` created by [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia).
 
@@ -31,7 +31,7 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 
 ![Luna ecosystem architecture](docs/luna-ecosystem.svg)
 
-Every Luna app is a Streamlit UI plus a FastMCP service on Luna Sentia's
+Every Luna app is a React UI plus a FastMCP service on Luna Sentia's
 `luna_sentia_network`: its data lives in Sentia's PostgreSQL, people sign in
 through Sentia's `auth`, and model calls go to Sentia's Ollama. Orange lines are
 Visia image URLs that other apps use: food images for Vita, room images for
@@ -42,7 +42,7 @@ running and opens each one with the shared sign-in. The purple line is the mood 
 beats of the track Vibia plays, which Lumia's lights follow.
 
 ```text
-Streamlit UI or MCP client
+React UI (through its gateway) or MCP client
         -> Luna Fiora MCP/API
         -> PostgreSQL
         -> Gmail API (read-only)
@@ -112,10 +112,22 @@ Run Compose Watch in the foreground:
 docker compose up --build --watch
 ```
 
-Changes under `mcp/app/` synchronize and restart the MCP service. UI source
-changes synchronize without rebuilding so Streamlit reruns automatically.
-Changes to either service's requirements or Dockerfile rebuild that service.
-Private Streamlit secrets and generated Python caches are excluded from sync.
+Changes under `mcp/app/` synchronize and restart the MCP service. Changes to
+`ui/gateway.py` and the other gateway files synchronize and restart the gateway.
+Changes under `ui/web/src` rebuild the UI image, because the browser app is built
+into it; for hot reload, run `npm run dev` in `ui/web`. Changes to either service's
+requirements or Dockerfile rebuild that service. Generated Python caches are
+excluded from sync.
+
+## UI
+
+The UI is a React and TypeScript app built with Vite, served by a small Starlette
+gateway in `ui/gateway.py`. The gateway checks the shared Luna session and
+`LUNAFIORA_ALLOWED_EMAILS` on every data request, and forwards only the backend
+routes the UI uses, adding the private API token, which never reaches the browser.
+Gateway tests run with `python -m unittest discover -s tests` in `ui/`, and browser
+tests with `npm test` in `ui/web/`.
+
 ## MCP tools
 
 - Transactions: `list_transactions`, `add_transaction`, `update_transaction`,

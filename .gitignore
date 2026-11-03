@@ -2,4 +2,7 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-ui/.streamlit/secrets.toml
+
+# Browser app
+ui/web/node_modules/
+ui/web/dist/
