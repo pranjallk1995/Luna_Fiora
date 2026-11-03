@@ -4,6 +4,7 @@ from decimal import Decimal
 from mcp.server.fastmcp import FastMCP
 from pydantic import ValidationError
 from starlette.responses import JSONResponse, HTMLResponse
+from app.core import tenancy
 from app.transport.auth import APIAuthenticator
 
 class FioraHTTPRoutes:
@@ -55,7 +56,9 @@ class FioraHTTPRoutes:
     async def authorization_url(self,r): return {"url":self.oauth.authorization_url(),"configured":self.oauth.configured}
     async def callback(self,request):
         try:
-            email,token=self.oauth.exchange(str(request.url),request.query_params["state"])
-            self.imports.save_connection(email,token)
+            state=request.query_params["state"]
+            email,token=self.oauth.exchange(str(request.url),state)
+            # Google's redirect carries no session: the signed state says who started it.
+            with tenancy.acting_as(self.oauth.user_of(state)): self.imports.save_connection(email,token)
             return HTMLResponse("<h2>Gmail connected to Luna Fiora.</h2><p>You may close this window.</p>")
         except Exception as e:return HTMLResponse(f"<h2>Connection failed</h2><p>{escape(str(e))}</p>",status_code=400)

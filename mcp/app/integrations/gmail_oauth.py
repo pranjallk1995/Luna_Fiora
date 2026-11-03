@@ -1,6 +1,7 @@
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from itsdangerous import URLSafeTimedSerializer
+from app.core import tenancy
 from app.core.config import AppConfig
 from app.integrations.gmail import SCOPES
 
@@ -16,9 +17,11 @@ class GmailOAuth:
         return Flow.from_client_config(config,scopes=SCOPES,redirect_uri=self.redirect_uri,state=state)
     def authorization_url(self):
         if not self.configured: raise ValueError("Gmail OAuth is not configured")
-        state=self.signer.dumps({"purpose":"gmail"})
+        state=self.signer.dumps({"purpose":"gmail","user":tenancy.current()})
         url,_=self.flow(state).authorization_url(access_type="offline",include_granted_scopes="true",prompt="consent",state=state)
         return url
+    def user_of(self,state):
+        return self.signer.loads(state,max_age=AppConfig.GMAIL_STATE_MAX_AGE_SECONDS)["user"]
     def exchange(self,url,state):
         self.signer.loads(state,max_age=AppConfig.GMAIL_STATE_MAX_AGE_SECONDS)
         flow=self.flow(state); flow.fetch_token(authorization_response=url)
