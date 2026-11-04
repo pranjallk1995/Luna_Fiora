@@ -44,6 +44,22 @@ CREATE TABLE IF NOT EXISTS gmail_imports (
  transaction_id BIGINT REFERENCES transactions(id) ON DELETE SET NULL,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS drive_connection (
+ singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK(singleton), email TEXT NOT NULL,
+ encrypted_refresh_token TEXT NOT NULL, connected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS drive_import_jobs (
+ job_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), folder_id TEXT NOT NULL, folder_name TEXT NOT NULL,
+ recursive BOOLEAN NOT NULL DEFAULT TRUE, status TEXT NOT NULL DEFAULT 'queued', total INTEGER NOT NULL DEFAULT 0,
+ error TEXT, current_item TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), started_at TIMESTAMPTZ, finished_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS drive_import_files (
+ job_id UUID NOT NULL REFERENCES drive_import_jobs(job_id) ON DELETE CASCADE, file_id TEXT NOT NULL,
+ version TEXT, name TEXT NOT NULL, path TEXT, outcome TEXT NOT NULL, added INTEGER NOT NULL DEFAULT 0,
+ matched INTEGER NOT NULL DEFAULT 0, rejected INTEGER NOT NULL DEFAULT 0, error TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(job_id,file_id)
+);
+CREATE INDEX IF NOT EXISTS drive_import_files_seen_idx ON drive_import_files(file_id,outcome);
 """
 class Database:
     def __init__(self, url):

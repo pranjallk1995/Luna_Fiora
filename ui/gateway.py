@@ -28,8 +28,12 @@ PROXIED_ROUTES = tuple(
     for method, pattern in (
         ("GET", r"/api/dashboard"),
         ("POST", r"/api/(transactions|commitments|goals|reminders)"),
-        ("GET", r"/api/gmail/authorization-url"),
-        ("POST", r"/api/gmail/sync"),
+        ("GET", r"/api/gmail/(status|authorization-url)"),
+        ("POST", r"/api/gmail/(sync|disconnect)"),
+        ("GET", r"/api/drive/(status|authorization-url|folders)"),
+        ("POST", r"/api/drive/disconnect"),
+        ("POST", r"/api/imports/drive-folder"),
+        ("GET", r"/api/imports(/[0-9a-fA-F-]{36})?"),
     )
 )
 UNAVAILABLE = "Luna Fiora's backend is unavailable. Please try again."

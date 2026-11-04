@@ -709,18 +709,50 @@ a {
 
 .lf-gmail {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
-  gap: 0.75rem;
-  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.lf-gmail-account {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lf-gmail-account .lv-caption {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .lf-gmail-note {
   margin: 0;
 }
 
+.lf-drive-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.lf-drive-check {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.lf-drive-job summary {
+  cursor: pointer;
+}
+
+.lf-disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
 @media (max-width: 700px) {
-  .lf-charts,
-  .lf-gmail {
+  .lf-charts {
     grid-template-columns: minmax(0, 1fr);
   }
 }

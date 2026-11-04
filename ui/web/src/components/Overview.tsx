@@ -1,52 +1,11 @@
-import { Mail, RefreshCw } from "lucide-react";
-
-import { useGmailLink, useGmailSync, type Dashboard } from "../api";
+import type { Dashboard } from "../api";
 import { dayLabel, dayValue, rupees } from "../format";
-import { messageOf } from "../lib";
+import { DrivePanel } from "./DrivePanel";
+import { GmailPanel } from "./GmailPanel";
 import { LineChart } from "./LineChart";
-import { useToast } from "./Toasts";
 
 const INCOME_COLOR = "#3987e5";
 const EXPENSE_COLOR = "#d95926";
-
-function GmailImport() {
-  const link = useGmailLink();
-  const sync = useGmailSync();
-  const toast = useToast();
-
-  const syncNow = () =>
-    sync.mutate(undefined, {
-      onSuccess: ({ configured, imported, review }) =>
-        toast(
-          configured
-            ? `Gmail synced: ${imported} imported, ${review} to review.`
-            : "Add Gmail OAuth settings to connect an inbox.",
-        ),
-      onError: (failure) => toast(messageOf(failure, "Gmail could not be synced.")),
-    });
-
-  return (
-    <section className="lv-panel">
-      <h2>Gmail transaction import</h2>
-      <div className="lf-gmail">
-        {link.data ? (
-          <a className="lv-button" href={link.data.url} target="_blank" rel="noopener">
-            <Mail size={17} />
-            Connect Gmail
-          </a>
-        ) : (
-          <p className="lv-alert lf-gmail-note">
-            {link.isPending ? "Checking Gmail settings…" : "Add Gmail OAuth settings to connect an inbox."}
-          </p>
-        )}
-        <button className="lv-button" type="button" disabled={sync.isPending} onClick={syncNow}>
-          <RefreshCw size={17} />
-          {sync.isPending ? "Syncing…" : "Sync now"}
-        </button>
-      </div>
-    </section>
-  );
-}
 
 export function Overview({ analytics }: { analytics: Dashboard["analytics"] }) {
   const { income, expense, net, trend, categories } = analytics;
@@ -111,7 +70,8 @@ export function Overview({ analytics }: { analytics: Dashboard["analytics"] }) {
         </section>
       </div>
 
-      <GmailImport />
+      <GmailPanel />
+      <DrivePanel />
     </>
   );
 }

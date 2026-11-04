@@ -77,6 +77,31 @@ class ProxyTests(GatewayTestCase):
         self.assertEqual(sent.headers["Authorization"], f"Bearer {TOKEN}")
         self.assertEqual(sent.url.params["start"], "2026-01-01")
 
+    def test_the_gmail_connection_routes_are_forwarded(self):
+        self.sign_in()
+        for method, path in (
+            ("GET", "/api/gmail/status"),
+            ("GET", "/api/gmail/authorization-url"),
+            ("POST", "/api/gmail/sync"),
+            ("POST", "/api/gmail/disconnect"),
+        ):
+            self.assertEqual(self.client.request(method, path).status_code, 200, path)
+        self.assertEqual(len(self.backend_requests), 4)
+
+    def test_the_drive_routes_are_forwarded(self):
+        self.sign_in()
+        for method, path in (
+            ("GET", "/api/drive/status"),
+            ("GET", "/api/drive/authorization-url"),
+            ("GET", "/api/drive/folders"),
+            ("POST", "/api/drive/disconnect"),
+            ("POST", "/api/imports/drive-folder"),
+            ("GET", "/api/imports"),
+            ("GET", "/api/imports/12345678-1234-1234-1234-123456789012"),
+        ):
+            self.assertEqual(self.client.request(method, path).status_code, 200, path)
+        self.assertEqual(self.client.get("/api/drive/callback").status_code, 404)
+
     def test_creating_is_forwarded_with_its_body(self):
         self.sign_in()
         self.client.post("/api/goals", json={"name": "Trip"})

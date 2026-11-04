@@ -18,6 +18,7 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 - EMI and SIP tracking, reminders, and financial goals.
 - Required monthly-saving estimates for goals.
 - Read-only Gmail OAuth with periodic filtered transaction searches.
+- Read-only Google Drive import of statements from a folder, as transactions.
 - Deterministic bank-message parsing first; ambiguous messages use the local
   `qwen3-vl:8b-instruct` Ollama model served by Luna Sentia. Each message runs through a
   LangGraph graph (`mcp/app/services/import_graph.py`): already imported →
@@ -33,7 +34,7 @@ Each person signs in with Google and has their own space in Luna Fiora: the sche
 
 Add `https://<your fiora MCP host>/mcp` to your client, such as Claude or ChatGPT, as a custom connector using OAuth. The client signs you in with Google and shows an approval page; check the return address, then allow it. Its tools then act only on your data. A request without a valid token gets 401.
 
-Each person connects their own Gmail, and imports go to their own data. Gmail's read-only access needs Google's approval: while the Google client's consent screen is in Testing, add each person as a test user. Deleting someone removes their stored Gmail token here; they revoke the access itself in their Google account.
+Each person connects their own Gmail and Google Drive, and imports go to their own data. Gmail's read-only access needs Google's approval: while the Google client's consent screen is in Testing, add each person as a test user. Deleting someone removes their stored Gmail and Drive tokens here; they revoke the access itself in their Google account.
 
 In the code, `mcp/app/core/tenancy.py` holds who the current request or job acts for, `mcp/app/data/tenants.py` creates and removes each person's schema, and `mcp/app/transport/luna_mcp.py` checks connector tokens and the private token on `/api/` routes. Code that does not say who it acts for raises `NoUserError` rather than reading anyone's data.
 
@@ -58,7 +59,7 @@ beats of the track Vibia plays, which Lumia's lights follow.
 React UI (through its gateway) or MCP client
         -> Luna Fiora MCP/API
         -> PostgreSQL
-        -> Gmail API (read-only)
+        -> Gmail and Google Drive APIs (read-only)
         -> Luna Sentia Ollama only when deterministic parsing is inconclusive
 ```
 
@@ -89,8 +90,7 @@ Fiora reaches Ollama at `http://luna-sentia-ollama:11434` (override with
 `OLLAMA_URL`). `OLLAMA_MODEL` must be one of the models in Sentia's
 `SENTIA_MODELS`.
 
-Create a private `.env` from `.env.example`. Generate a Fernet key for
-`FIORA_TOKEN_ENCRYPTION_KEY`; it encrypts Gmail refresh tokens at rest.
+Create a private `.env` from `.env.example`.
 
 Fiora signs people in through Luna Sentia's single sign-on: one Google sign-in at
 Sentia opens every Luna app, and **Sign out** in any app signs out of all of them.
@@ -100,14 +100,37 @@ Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
 `LUNAFIORA_ALLOWED_EMAILS` to `*` for everyone with a Luna account, or to a comma-separated list; see
 [Single sign-on](https://github.com/pranjallk1995/Luna_Sentia#single-sign-on).
 
-For Gmail import, enable the Gmail API in Google Cloud and add a separate backend callback:
+### Gmail import
 
-- Hosted: `https://fiora-mcp.lunaapps.fyi/api/gmail/callback`
-- Local: `http://localhost:18003/api/gmail/callback`
+Gmail import needs a Google OAuth client, set as `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET` in `.env`; Sentia's sign-on client works. In Google Cloud,
 
-Set the selected URL as `GMAIL_REDIRECT_URI`. Fiora requests only
-`https://www.googleapis.com/auth/gmail.readonly`. OAuth credentials and tokens
-remain private and must never be committed.
+1. Enable the **Gmail API**.
+2. Add `<MCP_PUBLIC_URL>/api/gmail/callback` to the client's redirect URIs.
+3. Set the consent screen to **In production** (in *Testing*, Google expires the token after 7 days).
+
+Then choose **Overview → Connect Gmail**. If Google later ends the sign-in, Fiora says so
+and offers **Reconnect Gmail**; your transactions stay. Refresh tokens are encrypted at
+rest with a key derived from `LUNAFIORA_API_TOKEN`, so changing that token means
+reconnecting Gmail. Fiora requests only `https://www.googleapis.com/auth/gmail.readonly`.
+OAuth credentials and tokens remain private and must never be committed.
+
+### Google Drive import
+
+Drive import uses the same Google client, with a separate sign-in that asks only for
+`drive.readonly`. On that client's project, enable the **Google Drive API** and add
+`<MCP_PUBLIC_URL>/api/drive/callback` to the redirect URIs. Then choose
+**Overview → Connect Google Drive**, pick a folder, and import it.
+
+Fiora reads PDFs with text, CSV, plain text, and Google Sheets; scans and Excel files are
+reported, not read. The local model lists each statement's transactions, and a file's rows
+are added together or not at all. Running a folder again skips files imported unchanged and
+retries the rest. Balances, totals, and card bill payments are left out by name. A row with the same day, amount, and direction as one Fiora already has is
+counted as **matched** and left out, so a statement does not double what Gmail imported, but
+a genuine second payment of the same amount that day is left out too. A Gmail alert arriving
+after its statement was imported is not matched. A locked PDF needs the password
+given on the import, which stays in memory for the job and is not stored. Model-read rows can be wrong, so check an
+import's first few transactions against the statement.
 
 ```sh
 docker compose up --build
@@ -151,7 +174,10 @@ tests with `npm test` in `ui/web/`.
   `estimate_goal_savings`
 - Reminders: `list_reminders`, `create_reminder`, `update_reminder`,
   `delete_reminder`
-- Analytics and imports: `financial_analytics`, `sync_gmail_transactions`
+- Analytics and Gmail imports: `financial_analytics`, `gmail_status`,
+  `sync_gmail_transactions`
+- Google Drive: `google_drive_status`, `list_drive_folders`, `import_drive_folder`,
+  `get_drive_import_job`, `list_drive_import_jobs`
 
 ## Database UI
 

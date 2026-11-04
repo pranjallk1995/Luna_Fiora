@@ -2,20 +2,26 @@ import base64, re
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from app.core.config import AppConfig
+from app.integrations.google_oauth import renewing_credentials
 
 SCOPES=["https://www.googleapis.com/auth/gmail.readonly"]
 AMOUNT=re.compile(r"(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)",re.I)
 DEBIT=re.compile(r"\b(debited|spent|purchase|paid|sent)\b",re.I)
 CREDIT=re.compile(r"\b(credited|received|salary)\b",re.I)
 
+class GmailSignInExpired(ValueError):
+    """Google no longer accepts the saved sign-in; the person has to connect Gmail again."""
+    def __init__(self,message="Your Gmail sign-in has expired. Reconnect Gmail from Fiora's overview to continue; your transactions are safe."):
+        super().__init__(message)
+
 class GmailReader:
     def __init__(self,client_id,client_secret): self.client_id=client_id; self.client_secret=client_secret
     def service(self,refresh_token):
-        from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
-        credentials=Credentials(None,refresh_token=refresh_token,token_uri=AppConfig.GOOGLE_TOKEN_URI,
-            client_id=self.client_id,client_secret=self.client_secret,scopes=SCOPES)
+        credentials=renewing_credentials(refresh_token,self.client_id,self.client_secret,SCOPES,GmailSignInExpired)
         return build("gmail","v1",credentials=credentials,cache_discovery=False)
+    def account_email(self,refresh_token):
+        return self.service(refresh_token).users().getProfile(userId="me").execute()["emailAddress"]
     def messages(self,refresh_token,max_results=AppConfig.GMAIL_MAX_RESULTS):
         service=self.service(refresh_token)
         refs=service.users().messages().list(userId="me",q=AppConfig.GMAIL_QUERY,maxResults=max_results).execute().get("messages",[])
