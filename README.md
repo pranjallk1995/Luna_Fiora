@@ -25,6 +25,18 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
   record for review.
 - MCP tools for transactions, EMIs, SIPs, goals, reminders, analytics, and Gmail sync.
 
+## Users and separate storage
+
+Each person signs in with Google and has their own space in Luna Fiora: the schema `u_<id>` in the `lunafiora` database. It is created the first time they use the app. The owner adds, disables, and deletes people at Luna Sentia's `/admin`, and can hide this app from everyone else there; see [Users and separate storage](https://github.com/pranjallk1995/Luna_Sentia#users-and-separate-storage).
+
+### Connecting an MCP client
+
+Add `https://<your fiora MCP host>/mcp` to your client, such as Claude or ChatGPT, as a custom connector using OAuth. The client signs you in with Google and shows an approval page; check the return address, then allow it. Its tools then act only on your data. A request without a valid token gets 401.
+
+Each person connects their own Gmail, and imports go to their own data. Gmail's read-only access needs Google's approval: while the Google client's consent screen is in Testing, add each person as a test user. Deleting someone removes their stored Gmail token here; they revoke the access itself in their Google account.
+
+In the code, `mcp/app/core/tenancy.py` holds who the current request or job acts for, `mcp/app/data/tenants.py` creates and removes each person's schema, and `mcp/app/transport/luna_mcp.py` checks connector tokens and the private token on `/api/` routes. Code that does not say who it acts for raises `NoUserError` rather than reading anyone's data.
+
 ## Architecture
 
 ### Luna ecosystem
@@ -85,7 +97,7 @@ Sentia opens every Luna app, and **Sign out** in any app signs out of all of the
 The UI needs no Google client of its own. Set `LUNA_SSO_URL` to
 Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
 `LUNA_SSO_INTERNAL_URL` to `http://luna-sentia-auth:8000`, and
-`LUNAFIORA_ALLOWED_EMAILS` to the accounts allowed into Fiora; see
+`LUNAFIORA_ALLOWED_EMAILS` to `*` for everyone with a Luna account, or to a comma-separated list; see
 [Single sign-on](https://github.com/pranjallk1995/Luna_Sentia#single-sign-on).
 
 For Gmail import, enable the Gmail API in Google Cloud and add a separate backend callback:
@@ -103,7 +115,7 @@ docker compose up --build
 
 - UI: <http://127.0.0.1:18504>
 - Health: <http://127.0.0.1:18003/health>
-- MCP: <http://127.0.0.1:18003/mcp>
+- MCP: <http://127.0.0.1:18003/mcp> (clients sign in; see Connecting an MCP client)
 
 ## Development workflow
 
