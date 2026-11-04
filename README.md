@@ -166,6 +166,7 @@ tests with `npm test` in `ui/web/`.
 
 ## MCP tools
 
+- Web UI: `get_ui_link`
 - Transactions: `list_transactions`, `add_transaction`, `update_transaction`,
   `delete_transaction`
 - EMIs and SIPs: `list_commitments`, `create_commitment`,
