@@ -22,6 +22,8 @@ const NAV: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: "goals", label: "Goals & reminders", icon: Flag },
 ];
 
+type Settings = { version: string };
+
 function SectionBody({ section, dashboard }: { section: Section; dashboard: Dashboard }) {
   if (section === "transactions") return <Transactions rows={dashboard.transactions} />;
   if (section === "plans") return <Plans rows={dashboard.commitments} />;
@@ -29,7 +31,7 @@ function SectionBody({ section, dashboard }: { section: Section; dashboard: Dash
   return <Overview analytics={dashboard.analytics} />;
 }
 
-function Workspace({ logoutUrl }: { logoutUrl: string }) {
+function Workspace({ logoutUrl, settings }: { logoutUrl: string; settings: Settings }) {
   const [section, setSection] = useState<Section>(() => remembered("lf-section", SECTIONS, "overview"));
   const [range, setRange] = useState<DateRange>(currentMonth);
   const dashboard = useDashboard(range);
@@ -95,16 +97,17 @@ function Workspace({ logoutUrl }: { logoutUrl: string }) {
         </div>
       )}
       {dashboard.data && <SectionBody section={section} dashboard={dashboard.data} />}
+      <footer className="lv-footer">Luna Fiora{settings.version && ` · v${settings.version}`}</footer>
     </main>
   );
 }
 
 export function App() {
-  const { data: session, error, refetch } = useSession<Record<string, never>>();
+  const { data: session, error, refetch } = useSession<Settings>();
 
   if (error) return <UnreachablePage onRetry={() => refetch()} />;
   if (!session) return null;
   if (session.status === "signed_out") return <SignInPage url={session.login_url} />;
   if (session.status === "forbidden") return <ForbiddenPage email={session.email} logoutUrl={session.logout_url} />;
-  return <Workspace logoutUrl={session.logout_url} />;
+  return <Workspace logoutUrl={session.logout_url} settings={session.settings} />;
 }
