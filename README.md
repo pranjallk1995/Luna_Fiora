@@ -26,6 +26,15 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
   record for review.
 - MCP tools for transactions, EMIs, SIPs, goals, reminders, analytics, and Gmail sync.
 
+## Models
+
+| Part | Model | Where it runs | Before changing it |
+| --- | --- | --- | --- |
+| Reading bank emails its rules cannot parse, and statement rows from Drive | `OLLAMA_MODEL` (default `qwen3-vl:8b-instruct`), 16k context | Sentia's Ollama, on the GPU | Sentia's `model_checks/check_model.py`, then a few emails and statements by hand; there is no automated evaluation |
+
+`OLLAMA_MODEL` must be in Sentia's `SENTIA_MODELS`; Sentia's
+[Changing a model](https://github.com/pranjallk1995/Luna_Sentia#changing-a-model) lists every check.
+
 ## Users and separate storage
 
 Each person signs in with Google and has their own space in Luna Fiora: the schema `u_<id>` in the `lunafiora` database. It is created the first time they use the app. The owner adds, disables, and deletes people at Luna Sentia's `/admin`, and can hide this app from everyone else there; see [Users and separate storage](https://github.com/pranjallk1995/Luna_Sentia#users-and-separate-storage).
