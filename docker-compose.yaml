@@ -10,7 +10,7 @@ services:
       MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18003}
       UI_PUBLIC_URL: ${UI_PUBLIC_URL:-http://localhost:18504}
       DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-sentia-db:5432/lunafiora
-      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
+      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:-lunafiora-dev-token-for-localhost-only}
       OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3-vl:8b-instruct}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -48,8 +48,8 @@ services:
       LUNA_SSO_URL: ${LUNA_SSO_URL:-http://localhost:19090}
       LUNA_SSO_INTERNAL_URL: ${LUNA_SSO_INTERNAL_URL:-http://luna-sentia-auth:8000}
       LUNAFIORA_API_URL: http://luna-fiora-mcp:8000
-      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:?Set LUNAFIORA_API_TOKEN}
-      LUNAFIORA_ALLOWED_EMAILS: ${LUNAFIORA_ALLOWED_EMAILS:?Set LUNAFIORA_ALLOWED_EMAILS}
+      LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:-lunafiora-dev-token-for-localhost-only}
+      LUNAFIORA_ALLOWED_EMAILS: ${LUNAFIORA_ALLOWED_EMAILS:-}
       TZ: Asia/Kolkata
     ports: ["127.0.0.1:18504:8501"]
     develop:

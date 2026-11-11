@@ -117,14 +117,16 @@ Fiora reaches Ollama at `http://luna-sentia-ollama:11434` (override with
 `OLLAMA_URL`). `OLLAMA_MODEL` must be one of the models in Sentia's
 `SENTIA_MODELS`.
 
-Create a private `.env` from `.env.example`.
+A fresh clone needs no `.env`: `luna.sh start` runs Fiora with localhost defaults, where only Luna Sentia's owner may use it and the UI-to-backend token is `lunafiora-dev-token-for-localhost-only`. Set your own values before giving it a public (https) address; `luna.sh start` refuses a public app that still uses the default token. Fiora encrypts Gmail and Drive tokens with a key derived from that token, so changing it later means reconnecting them.
+
+To change them, create a private `.env` from `.env.example`.
 
 Fiora signs people in through Luna Sentia's single sign-on: one Google sign-in at
 Sentia opens every Luna app, and **Sign out** in any app signs out of all of them.
 The UI needs no Google client of its own. Set `LUNA_SSO_URL` to
 Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
 `LUNA_SSO_INTERNAL_URL` to `http://luna-sentia-auth:8000`, and
-`LUNAFIORA_ALLOWED_EMAILS` to `*` for everyone with a Luna account, or to a comma-separated list; see
+`LUNAFIORA_ALLOWED_EMAILS` to `*` for everyone with a Luna account, to a comma-separated list, or blank (the default) for Sentia's owner only; see
 [Single sign-on](https://github.com/pranjallk1995/Luna_Sentia#single-sign-on).
 
 ### Gmail import
