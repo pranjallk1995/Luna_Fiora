@@ -33,7 +33,7 @@ class AppConfig:
     drive_redirect_uri: str
     encryption_key: str
     poll_seconds: int
-    mcp_public_url: str = "http://localhost:18003"
+    mcp_public_url: str = "http://localhost:18000"
     host: str = "0.0.0.0"
     port: int = 8000
 

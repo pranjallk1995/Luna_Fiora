@@ -5,10 +5,10 @@ services:
     working_dir: /workspace/mcp
     restart: unless-stopped
     environment:
-      LUNA_SSO_URL: ${LUNA_SSO_URL:-http://localhost:19090}
+      LUNA_SSO_URL: ${LUNA_SSO_URL:-http://localhost:19001}
       LUNA_SSO_INTERNAL_URL: ${LUNA_SSO_INTERNAL_URL:-http://luna-sentia-auth:8000}
-      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18003}
-      UI_PUBLIC_URL: ${UI_PUBLIC_URL:-http://localhost:18504}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:18000}
+      UI_PUBLIC_URL: ${UI_PUBLIC_URL:-http://localhost:18500}
       DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-sentia-db:5432/lunafiora
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:-lunafiora-dev-token-for-localhost-only}
       OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
@@ -17,7 +17,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GMAIL_POLL_MINUTES: ${GMAIL_POLL_MINUTES:-15}
       TZ: Asia/Kolkata
-    ports: ["127.0.0.1:18003:8000"]
+    ports: ["127.0.0.1:18000:8000"]
     develop:
       watch:
         - action: sync+restart
@@ -45,13 +45,13 @@ services:
     working_dir: /workspace/ui
     restart: unless-stopped
     environment:
-      LUNA_SSO_URL: ${LUNA_SSO_URL:-http://localhost:19090}
+      LUNA_SSO_URL: ${LUNA_SSO_URL:-http://localhost:19001}
       LUNA_SSO_INTERNAL_URL: ${LUNA_SSO_INTERNAL_URL:-http://luna-sentia-auth:8000}
       LUNAFIORA_API_URL: http://luna-fiora-mcp:8000
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:-lunafiora-dev-token-for-localhost-only}
       LUNAFIORA_ALLOWED_EMAILS: ${LUNAFIORA_ALLOWED_EMAILS:-}
       TZ: Asia/Kolkata
-    ports: ["127.0.0.1:18504:8501"]
+    ports: ["127.0.0.1:18500:8501"]
     develop:
       watch:
         # The gateway restarts on Python changes; the browser app is built into the image.

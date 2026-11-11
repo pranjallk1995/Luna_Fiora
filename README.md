@@ -165,9 +165,9 @@ import's first few transactions against the statement.
 docker compose up --build
 ```
 
-- UI: <http://127.0.0.1:18504>
-- Health: <http://127.0.0.1:18003/health>
-- MCP: <http://127.0.0.1:18003/mcp> (clients sign in; see Connecting an MCP client)
+- UI: <http://127.0.0.1:18500>
+- Health: <http://127.0.0.1:18000/health>
+- MCP: <http://127.0.0.1:18000/mcp> (clients sign in; see Connecting an MCP client)
 
 ## Development workflow
 
@@ -213,7 +213,7 @@ tests with `npm test` in `ui/web/`.
 
 Fiora's database is in Luna Sentia's PostgreSQL, which is not published to the host. Inspect it with
 [Adminer in Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia#database-ui) at
-<http://127.0.0.1:19080>: System `PostgreSQL`, Server `luna-sentia-db`, Username
+<http://127.0.0.1:19000>: System `PostgreSQL`, Server `luna-sentia-db`, Username
 and Database `lunafiora`, Password your `POSTGRES_PASSWORD`.
 
 ## Privacy boundaries
