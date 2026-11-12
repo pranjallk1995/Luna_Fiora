@@ -92,6 +92,24 @@ React UI (through its gateway) or MCP client
 
 Fiora uses unique aliases `luna-fiora-mcp` and `luna-fiora-ui`. Its database lives in Luna Sentia's PostgreSQL (`luna-sentia-db`), which is private, and the service binds only to localhost.
 
+## Quickstart
+
+On one machine you need no `.env`. Clone Fiora beside [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia),
+which runs its database, models, and sign-in, then start both:
+
+```sh
+git clone https://github.com/pranjallk1995/Luna_Sentia.git
+git clone https://github.com/pranjallk1995/Luna_Fiora.git
+./Luna_Sentia/luna.sh start fiora
+```
+
+`start` pulls the release images, starts Sentia and waits until it is healthy, then starts
+Fiora. Once both are up, it deletes the images their new ones replaced. Open
+<http://localhost:18500> and sign in as Sentia's owner with one click. To run your
+local code instead, use `./Luna_Sentia/luna.sh start --build fiora`. Before giving Fiora a
+public address, set your own secrets as described in [Start](#start). Every option of
+`luna.sh` is in [Start everything](https://github.com/pranjallk1995/Luna_Sentia#start-everything).
+
 ## Start
 
 Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until it is healthy. Sentia runs
