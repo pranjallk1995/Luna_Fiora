@@ -20,7 +20,7 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 - Read-only Gmail OAuth with periodic filtered transaction searches.
 - Read-only Google Drive import of statements from a folder, as transactions.
 - Deterministic bank-message parsing first; ambiguous messages use the local
-  `qwen3-vl:8b-instruct` Ollama model served by Luna Sentia. Each message runs through a
+  `huihui_ai/qwen3-vl-abliterated:8b-instruct` Ollama model served by Luna Sentia. Each message runs through a
   LangGraph graph (`mcp/app/services/import_graph.py`): already imported →
   skip; otherwise parse, ask the model only if parsing fails, then import or
   record for review.
@@ -30,7 +30,7 @@ FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single si
 
 | Part | Model | Where it runs | Before changing it |
 | --- | --- | --- | --- |
-| Reading bank emails its rules cannot parse, and statement rows from Drive | `OLLAMA_MODEL` (default `qwen3-vl:8b-instruct`), 16k context | Sentia's Ollama, on the GPU | Sentia's `model_checks/check_model.py`, then a few emails and statements by hand; there is no automated evaluation |
+| Reading bank emails its rules cannot parse, and statement rows from Drive | `OLLAMA_MODEL` (default `huihui_ai/qwen3-vl-abliterated:8b-instruct`), 16k context | Sentia's Ollama, on the GPU | Sentia's `model_checks/check_model.py`, then a few emails and statements by hand; there is no automated evaluation |
 
 `OLLAMA_MODEL` must be in Sentia's `SENTIA_MODELS`; Sentia's
 [Changing a model](https://github.com/pranjallk1995/Luna_Sentia#changing-a-model) lists every check.
@@ -58,9 +58,8 @@ In the code, `mcp/app/core/tenancy.py` holds who the current request or job acts
 
 | Model | Served by | Used by | Before changing it |
 | --- | --- | --- | --- |
-| `qwen3-vl:8b-instruct` | Ollama | Lexia (`DOCUMENT_MODEL`), Visia (`VISION_MODEL`), Vibia (`CAPTION_MODEL`), Fiora (`OLLAMA_MODEL`) | `model_checks/check_model.py`, then Lexia's, Visia's and Vibia's `model_evaluations/` |
+| `huihui_ai/qwen3-vl-abliterated:8b-instruct` (Qwen3-VL 8B, uncensored) | Ollama, at 16k context for every app; in Socia's chat model's place while Luna looks at a photo | Lexia (`DOCUMENT_MODEL`), Visia (`VISION_MODEL`), Vibia (`CAPTION_MODEL`), Fiora (`OLLAMA_MODEL`), Socia's photo replies (`LUNASOCIA_VISION_MODEL`) | `model_checks/check_model.py`, then Lexia's, Visia's and Vibia's `model_evaluations/` and Socia's cat game |
 | `huihui_ai/qwen3-abliterated:8b` (Qwen3 8B, uncensored) | Ollama, resident at `SENTIA_RESIDENT_CONTEXT` | Socia's chat (`LUNASOCIA_CHAT_MODEL`) | `model_checks/check_model.py --context 8192`, then Socia's `model_evaluations/` |
-| `huihui_ai/qwen3-vl-abliterated:8b-instruct` (Qwen3-VL 8B, uncensored) | Ollama, in the chat model's place while Luna looks at a photo | Socia's photo replies (`LUNASOCIA_VISION_MODEL`) | Socia's cat game, then a few photos by hand |
 | `qwen3-embedding:0.6b` | Ollama | Lexia's semantic search (`EMBEDDING_MODEL`) | Re-embed with Lexia's `reindex_semantic_search` |
 | Qwen-Image 2.1 Turbo | ComfyUI | Socia's pictures of Luna | A few pictures by hand |
 | SigLIP 2 (`google/siglip2-base-patch16-224`) | Visia itself, GPU only | Visia's meaning search | Pinned in Visia's image; `backfill_metadata` re-embeds |

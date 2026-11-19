@@ -53,7 +53,7 @@ class AppConfig:
             database_url=os.environ["DATABASE_URL"], api_token=token,
             mcp_public_url=mcp_public_url,
             ollama_url=os.getenv("OLLAMA_URL", "http://luna-sentia-ollama:11434"),
-            ollama_model=os.getenv("OLLAMA_MODEL", "qwen3-vl:8b-instruct"),
+            ollama_model=os.getenv("OLLAMA_MODEL", "huihui_ai/qwen3-vl-abliterated:8b-instruct"),
             google_client_id=os.getenv("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
             gmail_redirect_uri=f"{mcp_public_url}/api/gmail/callback",

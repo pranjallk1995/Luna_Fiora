@@ -1,7 +1,7 @@
 services:
   mcp:
     build: ./mcp
-    image: ghcr.io/pranjallk1995/luna-fiora-mcp:${LUNA_IMAGE_TAG:-v0.1.1}
+    image: ghcr.io/pranjallk1995/luna-fiora-mcp:${LUNA_IMAGE_TAG:-v0.2.0}
     working_dir: /workspace/mcp
     restart: unless-stopped
     environment:
@@ -12,7 +12,7 @@ services:
       DATABASE_URL: postgresql://lunafiora:${POSTGRES_PASSWORD:-lunafiora-dev}@luna-sentia-db:5432/lunafiora
       LUNAFIORA_API_TOKEN: ${LUNAFIORA_API_TOKEN:-lunafiora-dev-token-for-localhost-only}
       OLLAMA_URL: ${OLLAMA_URL:-http://luna-sentia-ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3-vl:8b-instruct}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-huihui_ai/qwen3-vl-abliterated:8b-instruct}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GMAIL_POLL_MINUTES: ${GMAIL_POLL_MINUTES:-15}
@@ -41,7 +41,7 @@ services:
 
   ui:
     build: ./ui
-    image: ghcr.io/pranjallk1995/luna-fiora-ui:${LUNA_IMAGE_TAG:-v0.1.1}
+    image: ghcr.io/pranjallk1995/luna-fiora-ui:${LUNA_IMAGE_TAG:-v0.2.0}
     working_dir: /workspace/ui
     restart: unless-stopped
     environment:
