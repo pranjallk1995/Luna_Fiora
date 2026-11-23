@@ -1,6 +1,6 @@
 # Luna Fiora
 
-![Status: not yet usable](https://img.shields.io/badge/Status-not_yet_usable-D73A49)
+![Status: early access](https://img.shields.io/badge/Status-early_access-DB6D28)
 
 > **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
 
@@ -106,7 +106,7 @@ git clone https://github.com/pranjallk1995/Luna_Fiora.git
 ./Luna_Sentia/luna.sh start fiora
 ```
 
-`start` pulls the release images, starts Sentia and waits until it is healthy, then starts
+`start` pulls the latest images, starts Sentia and waits until it is healthy, then starts
 Fiora. Once both are up, it deletes the images their new ones replaced. Open
 <http://localhost:18500> and sign in as Sentia's owner with one click. To run your
 local code instead, use `./Luna_Sentia/luna.sh start --build fiora`. Before giving Fiora a
@@ -115,11 +115,11 @@ public address, set your own secrets as described in [Start](#start). Every opti
 
 ## Releases
 
-Each release is on the [Releases page](https://github.com/pranjallk1995/Luna_Fiora/releases), with what changed and how to
-upgrade. The `docker-compose.yaml` on `main` names the images of the latest release, so
-`git pull`, then `./Luna_Sentia/luna.sh start`, updates to it. When a release needs a newer
-Luna Sentia, its notes say so: upgrade Sentia first. Its 0.x releases are pre-releases: it is still taking shape, and a release can change how it works. The release of every Luna app is
-listed in [Luna Sentia's Releases](https://github.com/pranjallk1995/Luna_Sentia#releases).
+Fiora is in early access: it is still taking shape and has no releases yet. Its
+`docker-compose.yaml` uses the `latest` images, built from `main` on every push, so
+`git pull`, then `./Luna_Sentia/luna.sh start`, updates to the newest code; any change can
+change how it works. Its first release will be listed in
+[Luna Sentia's Releases](https://github.com/pranjallk1995/Luna_Sentia#releases).
 
 ## Start
 
