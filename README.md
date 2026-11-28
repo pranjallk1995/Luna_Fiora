@@ -246,6 +246,113 @@ tests with `npm test` in `ui/web/`.
 - Google Drive: `google_drive_status`, `list_drive_folders`, `import_drive_folder`,
   `get_drive_import_job`, `list_drive_import_jobs`
 
+## Data model
+
+### Database diagram
+
+Each person's schema (`u_<id>` in the `lunafiora` database) holds these tables, drawn from the live database. Lines are foreign keys; a table without one is joined by value (a name, a date, an ID kept as text). `PK` marks primary keys, `FK` foreign keys, `UK` unique columns.
+
+```mermaid
+erDiagram
+    commitments {
+        int8 id PK
+        text kind
+        text name
+        numeric amount
+        int2 day_of_month
+        date start_date
+        date end_date
+        bool active
+        timestamptz created_at
+    }
+    drive_connection {
+        bool singleton PK
+        text email
+        text encrypted_refresh_token
+        timestamptz connected_at
+    }
+    drive_import_files {
+        uuid job_id PK, FK
+        text file_id PK
+        text version
+        text name
+        text path
+        text outcome
+        int4 added
+        int4 matched
+        int4 rejected
+        text error
+        timestamptz created_at
+    }
+    drive_import_jobs {
+        uuid job_id PK
+        text folder_id
+        text folder_name
+        bool recursive
+        text status
+        int4 total
+        text error
+        text current_item
+        timestamptz created_at
+        timestamptz started_at
+        timestamptz finished_at
+    }
+    gmail_connections {
+        text email PK
+        text encrypted_refresh_token
+        text last_history_id
+        timestamptz last_sync_at
+        timestamptz created_at
+    }
+    gmail_imports {
+        text message_id PK
+        text email
+        text subject
+        text sender
+        timestamptz received_at
+        text status
+        text excerpt
+        int8 transaction_id FK
+        timestamptz created_at
+    }
+    goals {
+        int8 id PK
+        text name
+        numeric target_amount
+        numeric current_amount
+        date target_date
+        text priority
+        text notes
+        timestamptz created_at
+    }
+    reminders {
+        int8 id PK
+        text title
+        timestamptz due_at
+        text recurrence
+        text entity_type
+        int8 entity_id
+        bool completed
+        timestamptz created_at
+    }
+    transactions {
+        int8 id PK
+        timestamptz occurred_at
+        text kind
+        numeric amount
+        bpchar currency
+        text merchant
+        text category
+        text account
+        text notes
+        text source
+        text external_id UK
+        timestamptz created_at
+    }
+    transactions ||--o{ gmail_imports : "transaction_id"
+    drive_import_jobs ||--o{ drive_import_files : "job_id"
+```
+
 ## Database UI
 
 Fiora's database is in Luna Sentia's PostgreSQL, which is not published to the host. Inspect it with
