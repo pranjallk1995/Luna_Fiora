@@ -1,105 +1,28 @@
 # Luna Fiora
 
+![Docker required](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)
+![Luna Sentia required](https://img.shields.io/badge/Luna_Sentia-required-6C5CE7?logo=docker&logoColor=white)
 ![Status: early access](https://img.shields.io/badge/Status-early_access-DB6D28)
 
-> **Work in progress:** Luna Fiora is a private, local-first and desktop-first personal finance tracker.
+> **Work in progress.**
 
-Luna Fiora follows the Luna Visia, Vita, and Lumia architecture: React UI,
-FastMCP/Python service, a database in Luna Sentia's shared PostgreSQL, single sign-on through Luna Sentia, and the shared
-`luna_sentia_network` created by [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia).
+**A private personal-finance tracker your AI assistant can keep up to date.** Fiora brings in your income and
+spending from bank emails and statements, and tracks EMIs, SIPs, goals and reminders.
 
-> **Requires Luna Sentia, running and healthy:** Luna Fiora keeps its data in Luna Sentia's PostgreSQL (`luna-sentia-db`) and joins Sentia's `luna_sentia_network`; it has no database of its own. Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until its `postgres` and `ollama` services report healthy, as described under [Start](#start).
+## What it does
 
-## Features
-
-- Monthly income, expenditure, net savings, category, and cash-flow analytics.
-- Custom date ranges, defaulting to the current month.
-- Manual and Gmail-imported income and expense transactions.
-- EMI and SIP tracking, reminders, and financial goals.
-- Required monthly-saving estimates for goals.
-- Read-only Gmail OAuth with periodic filtered transaction searches.
-- Read-only Google Drive import of statements from a folder, as transactions.
-- Deterministic bank-message parsing first; ambiguous messages use the local
-  `huihui_ai/qwen3-vl-abliterated:8b-instruct` Ollama model served by Luna Sentia. Each message runs through a
-  LangGraph graph (`mcp/app/services/import_graph.py`): already imported →
-  skip; otherwise parse, ask the model only if parsing fails, then import or
-  record for review.
-- MCP tools for transactions, EMIs, SIPs, goals, reminders, analytics, and Gmail sync.
-
-## Models
-
-| Part | Model | Where it runs | Before changing it |
-| --- | --- | --- | --- |
-| Reading bank emails its rules cannot parse, and statement rows from Drive | `OLLAMA_MODEL` (default `huihui_ai/qwen3-vl-abliterated:8b-instruct`), 16k context | Sentia's Ollama, on the GPU | Sentia's `model_checks/check_model.py`, then a few emails and statements by hand; there is no automated evaluation |
-
-`OLLAMA_MODEL` must be in Sentia's `SENTIA_MODELS`; Sentia's
-[Changing a model](https://github.com/pranjallk1995/Luna_Sentia#changing-a-model) lists every check.
-
-## Users and separate storage
-
-Each person signs in with Google and has their own space in Luna Fiora: the schema `u_<id>` in the `lunafiora` database. It is created the first time they use the app. The owner adds, disables, and deletes people at Luna Sentia's `/admin`, and can hide this app from everyone else there; see [Users and separate storage](https://github.com/pranjallk1995/Luna_Sentia#users-and-separate-storage).
-
-### Connecting an MCP client
-
-Add `https://<your fiora MCP host>/mcp` to your client, such as Claude or ChatGPT, as a custom connector using OAuth. The client signs you in with Google and shows an approval page; check the return address, then allow it. Its tools then act only on your data. A request without a valid token gets 401.
-
-Each person connects their own Gmail and Google Drive, and imports go to their own data. Gmail's read-only access needs Google's approval: while the Google client's consent screen is in Testing, add each person as a test user. Deleting someone removes their stored Gmail and Drive tokens here; they revoke the access itself in their Google account.
-
-In the code, `mcp/app/core/tenancy.py` holds who the current request or job acts for, `mcp/app/data/tenants.py` creates and removes each person's schema, and `mcp/app/transport/luna_mcp.py` checks connector tokens and the private token on `/api/` routes. Code that does not say who it acts for raises `NoUserError` rather than reading anyone's data.
-
-## Architecture
-
-### Luna ecosystem
-
-![Luna ecosystem architecture](docs/luna-ecosystem.svg)
-
-<!-- luna-models:start -->
-**Which app uses which model.** All of them run on Luna Sentia, which keeps Socia's chat model on the GPU and lets the others visit; see its [Models](https://github.com/pranjallk1995/Luna_Sentia#models) and [Changing a model](https://github.com/pranjallk1995/Luna_Sentia#changing-a-model).
-
-| Model | Served by | Used by | Before changing it |
-| --- | --- | --- | --- |
-| `huihui_ai/qwen3-vl-abliterated:8b-instruct` (Qwen3-VL 8B, uncensored) | Ollama, at 16k context for every app; in Socia's chat model's place while Luna looks at a photo | Lexia (`DOCUMENT_MODEL`), Visia (`VISION_MODEL`), Vibia (`CAPTION_MODEL`), Fiora (`OLLAMA_MODEL`), Socia's photo replies (`LUNASOCIA_VISION_MODEL`) | `model_checks/check_model.py`, then Lexia's, Visia's and Vibia's `model_evaluations/` and Socia's cat game |
-| `huihui_ai/qwen3-abliterated:8b` (Qwen3 8B, uncensored) | Ollama, resident at `SENTIA_RESIDENT_CONTEXT` | Socia's chat (`LUNASOCIA_CHAT_MODEL`) | `model_checks/check_model.py --context 8192`, then Socia's `model_evaluations/` |
-| `qwen3-embedding:0.6b` (Qwen3-Embedding 0.6B) | Ollama, resident beside Socia's chat model (1 GB, at 4k) | Lexia's semantic search (`EMBEDDING_MODEL`); what Socia remembers by herself, and the lines of her memory a message is about (`LUNASOCIA_EMBED_MODEL`) | Re-embed with Lexia's `reindex_semantic_search`; train Socia's neurons again (her notebook 03, Part B) |
-| Qwen-Image 2.1 Turbo (4-bit text encoder, int8 diffusion model) | Sentia's imagegen (diffusers), GPU, one picture at a time | Socia's pictures of Luna | A few pictures by hand |
-| SigLIP 2 (`google/siglip2-base-patch16-224`) | Visia itself, GPU only | Visia's meaning search | Pinned in Visia's image; `backfill_metadata` re-embeds |
-| CLAP (`laion/clap-htsat-unfused`) | Vibia itself, GPU or CPU | Vibia's listening and search | Pinned in Vibia's image; every track is heard again |
-| Docling (layout, tables, OCR) | Lexia itself, GPU or CPU | Lexia's page reading | Pinned in Lexia's image |
-| Whisper `large-v3-turbo`, Kokoro 82M | Socia itself, GPU (about 1.5 GB, and 0.2 GB for CUDA, loaded at start) or CPU | Socia's voice messages and Luna's voice (`LUNASOCIA_STT_MODEL`, `LUNASOCIA_TTS_VOICE`, `LUNASOCIA_VOICE_DEVICE`) | Listen to a few replies; downloaded on first use |
-| InsightFace `buffalo_l` (SCRFD, ArcFace) | Socia itself, GPU (about 0.4 GB, loaded with the vision model for a photo) or CPU | Whose faces are in a photo, Luna's or the owner's, told to her vision model | Socia's `model_evaluations/self_recognition.py`; non-commercial licence |
-<!-- luna-models:end -->
-
-Every Luna app but Luna Socia is a React UI plus a FastMCP service on Luna Sentia's
-`luna_sentia_network`; Socia, the owner's chat with Luna, is one service with no MCP
-server of its own. Each app's data lives in Sentia's PostgreSQL, people sign in through Sentia's
-`auth`, and model calls go through Sentia's model monitor, which times each one, samples
-the GPU and keeps Socia's chat model resident, to its Ollama. Socia's pictures come from
-Sentia's image service (Qwen-Image 2.1 with diffusers), which takes turns with Ollama on the GPU. Visia's SigLIP 2, Vibia's CLAP
-and Lexia's Docling run inside those apps instead, each in a process that exits when idle.
-Orange lines are Visia image URLs that other apps use: food images for Vita, room images
-for Lumia, and cover art for Vibia. The rose line is lab reports: Vita reads the health reports Lexia stores,
-with their results and PDFs, for its Health reports page. Grey dashed lines are planned: links into Fiora (tax
-details from Lexia, transaction image and icon URLs from Visia). Luna Unia is the one home
-for the other apps, on port 42069: it checks which Luna stacks are running and opens each
-one with the shared sign-in. The purple line is the mood and beats of the track Vibia
-plays, which Lumia's lights follow. The green line is Socia using every app's MCP tools,
-and Sentia's, as the owner: it signs in to them with OAuth like any MCP client, so Luna can
-play music, dim the lights or find a photo from the chat.
-
-```text
-React UI (through its gateway) or MCP client
-        -> Luna Fiora MCP/API
-        -> PostgreSQL
-        -> Gmail and Google Drive APIs (read-only)
-        -> Luna Sentia Ollama only when deterministic parsing is inconclusive
-```
-
-Fiora uses unique aliases `luna-fiora-mcp` and `luna-fiora-ui`. Its database lives in Luna Sentia's PostgreSQL (`luna-sentia-db`), which is private, and the service binds only to localhost.
+- **Monthly analytics:** income, spending, net savings, categories and cash flow, for any date range.
+- **Transactions** added by hand, from bank emails in Gmail, or from statements in a Google Drive folder (both
+  read-only).
+- **Rules first, model second:** known bank messages are parsed by rules; only the ones they can't read go to a local
+  model, and anything unsure waits for your review.
+- **EMIs, SIPs, goals and reminders**, with the monthly saving each goal needs.
+- **Private by design:** only recent transaction-like emails are searched, and full email bodies are never stored.
 
 ## Quickstart
 
-On one machine you need no `.env`. Clone Fiora beside [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia),
-which runs its database, models, and sign-in, then start both:
+Fiora runs on [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia), which provides its database, model and
+sign-in. On one machine you need no `.env`:
 
 ```sh
 git clone https://github.com/pranjallk1995/Luna_Sentia.git
@@ -107,263 +30,35 @@ git clone https://github.com/pranjallk1995/Luna_Fiora.git
 ./Luna_Sentia/luna.sh start fiora
 ```
 
-`start` pulls the latest images, starts Sentia and waits until it is healthy, then starts
-Fiora. Once both are up, it deletes the images their new ones replaced. Open
-<http://localhost:18500> and sign in as Sentia's owner with one click. To run your
-local code instead, use `./Luna_Sentia/luna.sh start --build fiora`. Before giving Fiora a
-public address, set your own secrets as described in [Start](#start). Every option of
-`luna.sh` is in [Start everything](https://github.com/pranjallk1995/Luna_Sentia#start-everything).
+Open <http://localhost:18500> and sign in as Sentia's owner. Gmail and Drive imports need a Google client, and a
+public address needs your own secrets: see [Getting started](https://github.com/pranjallk1995/Luna_Fiora/wiki/Getting-Started).
 
-<p align="center">
-  <a href="https://github.com/pranjallk1995/Luna_Sentia/blob/main/assets/luna-sh-demo.mp4"><img src="https://raw.githubusercontent.com/pranjallk1995/Luna_Sentia/main/assets/luna-sh-demo.webp" alt="A terminal running luna.sh: starting Sentia and every app, showing one app's containers, stopping and starting Lumia alone, listing every app's containers, then watching Lumia while a saved file syncs and restarts its UI" width="900"></a>
-</p>
+## Connect your AI assistant
 
-<p align="center"><em>Start everything, check one app, stop and start it alone, list every app, then
-develop with <code>--watch</code>. Select it for the sharper video.</em></p>
+Add `https://<your fiora MCP host>/mcp` to Claude, ChatGPT or any MCP client as a custom connector (OAuth). Every
+tool is listed in [MCP tools](https://github.com/pranjallk1995/Luna_Fiora/wiki/MCP-Tools).
 
-## Releases
+## Works with
 
-Fiora is in early access: it is still taking shape and has no releases yet. Its
-`docker-compose.yaml` uses the `latest` images, built from `main` on every push, so
-`git pull`, then `./Luna_Sentia/luna.sh start`, updates to the newest code; any change can
-change how it works. Its first release will be listed in
-[Luna Sentia's Releases](https://github.com/pranjallk1995/Luna_Sentia#releases).
+- **[Luna Lexia](https://github.com/pranjallk1995/Luna_Lexia)** (planned): tax and salary details from your documents.
 
-## Start
+## Documentation
 
-Start [Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia) first and wait until it is healthy. Sentia runs
-the PostgreSQL server that holds Fiora's `lunafiora` database, serves the models,
-and creates the shared `luna_sentia_network` every Luna app joins. Fiora has no
-database of its own: started before Sentia is healthy, it cannot reach its
-data and keeps restarting until it can.
+The [wiki](https://github.com/pranjallk1995/Luna_Fiora/wiki) has the full reference:
 
-```sh
-cd ../Luna_Sentia
-docker compose up -d --wait postgres ollama adminer
-docker compose run --rm postgres-init   # creates the lunafiora role and database
-docker compose ps                       # postgres and ollama must show (healthy)
-```
+| Page | What's in it |
+| --- | --- |
+| [Home](https://github.com/pranjallk1995/Luna_Fiora/wiki) | Features and the UI |
+| [Getting started](https://github.com/pranjallk1995/Luna_Fiora/wiki/Getting-Started) | Setup, `.env`, sign-in, Gmail and Drive |
+| [MCP tools](https://github.com/pranjallk1995/Luna_Fiora/wiki/MCP-Tools) | Every tool your assistant can call |
+| [Architecture](https://github.com/pranjallk1995/Luna_Fiora/wiki/Architecture) | Services, privacy boundaries, model, data model and database diagram |
+| [Development](https://github.com/pranjallk1995/Luna_Fiora/wiki/Development) | Development workflow and tests |
+| [Operations](https://github.com/pranjallk1995/Luna_Fiora/wiki/Operations) | The database UI |
 
-See [Is Sentia healthy?](https://github.com/pranjallk1995/Luna_Sentia#is-sentia-healthy) if they do not.
+The UI follows [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 
-To start Sentia and every Luna app together, with or without Compose Watch, use
-`../luna.sh start [--watch]`; see the
-[Sentia README](https://github.com/pranjallk1995/Luna_Sentia#start-everything).
+## Releases and development
 
-Fiora reaches Ollama at `http://luna-sentia-ollama:11434` (override with
-`OLLAMA_URL`). `OLLAMA_MODEL` must be one of the models in Sentia's
-`SENTIA_MODELS`.
-
-A fresh clone needs no `.env`: `luna.sh start` runs Fiora with localhost defaults, where only Luna Sentia's owner may use it and the UI-to-backend token is `lunafiora-dev-token-for-localhost-only`. Set your own values before giving it a public (https) address; `luna.sh start` refuses a public app that still uses the default token. Fiora encrypts Gmail and Drive tokens with a key derived from that token, so changing it later means reconnecting them.
-
-To change them, create a private `.env` from `.env.example`.
-
-Fiora signs people in through Luna Sentia's single sign-on: one Google sign-in at
-Sentia opens every Luna app, and **Sign out** in any app signs out of all of them.
-The UI needs no Google client of its own. Set `LUNA_SSO_URL` to
-Sentia's public sign-on address (`SENTIA_AUTH_PUBLIC_URL` in Sentia's `.env`),
-`LUNA_SSO_INTERNAL_URL` to `http://luna-sentia-auth:8000`, and
-`LUNAFIORA_ALLOWED_EMAILS` to `*` for everyone with a Luna account, to a comma-separated list, or blank (the default) for Sentia's owner only; see
-[Single sign-on](https://github.com/pranjallk1995/Luna_Sentia#single-sign-on).
-
-### Gmail import
-
-Gmail import needs a Google OAuth client, set as `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` in `.env`; Sentia's sign-on client works. In Google Cloud,
-
-1. Enable the **Gmail API**.
-2. Add `<MCP_PUBLIC_URL>/api/gmail/callback` to the client's redirect URIs.
-3. Set the consent screen to **In production** (in *Testing*, Google expires the token after 7 days).
-
-Then choose **Overview → Connect Gmail**. If Google later ends the sign-in, Fiora says so
-and offers **Reconnect Gmail**; your transactions stay. Refresh tokens are encrypted at
-rest with a key derived from `LUNAFIORA_API_TOKEN`, so changing that token means
-reconnecting Gmail. Fiora requests only `https://www.googleapis.com/auth/gmail.readonly`.
-OAuth credentials and tokens remain private and must never be committed.
-
-### Google Drive import
-
-Drive import uses the same Google client, with a separate sign-in that asks only for
-`drive.readonly`. On that client's project, enable the **Google Drive API** and add
-`<MCP_PUBLIC_URL>/api/drive/callback` to the redirect URIs. Then choose
-**Overview → Connect Google Drive**, pick a folder, and import it.
-
-Fiora reads PDFs with text, CSV, plain text, and Google Sheets; scans and Excel files are
-reported, not read. The local model lists each statement's transactions, and a file's rows
-are added together or not at all. Running a folder again skips files imported unchanged and
-retries the rest. Balances, totals, and card bill payments are left out by name. A row with the same day, amount, and direction as one Fiora already has is
-counted as **matched** and left out, so a statement does not double what Gmail imported, but
-a genuine second payment of the same amount that day is left out too. A Gmail alert arriving
-after its statement was imported is not matched. A locked PDF needs the password
-given on the import, which stays in memory for the job and is not stored. Model-read rows can be wrong, so check an
-import's first few transactions against the statement.
-
-```sh
-docker compose up --build
-```
-
-- UI: <http://127.0.0.1:18500>
-- Health: <http://127.0.0.1:18000/health>
-- MCP: <http://127.0.0.1:18000/mcp> (clients sign in; see Connecting an MCP client)
-
-## Development workflow
-
-Run Compose Watch in the foreground:
-
-```sh
-docker compose up --build --watch
-```
-
-Changes under `mcp/app/` synchronize and restart the MCP service. Changes to
-`ui/gateway.py` and the other gateway files synchronize and restart the gateway.
-Changes under `ui/web/src` rebuild the UI image, because the browser app is built
-into it; for hot reload, run `npm run dev` in `ui/web`. Changes to either service's
-requirements or Dockerfile rebuild that service. Generated Python caches are
-excluded from sync.
-
-## UI
-
-The UI is a React and TypeScript app built with Vite, served by a small Starlette
-gateway in `ui/gateway.py`. The gateway checks the shared Luna session and
-`LUNAFIORA_ALLOWED_EMAILS` on every data request, and forwards only the backend
-routes the UI uses, adding the private API token, which never reaches the browser.
-Gateway tests run with `python -m unittest discover -s tests` in `ui/`, and browser
-tests with `npm test` in `ui/web/`.
-
-## MCP tools
-
-- Web UI: `get_ui_link`
-- Transactions: `list_transactions`, `add_transaction`, `update_transaction`,
-  `delete_transaction`
-- EMIs and SIPs: `list_commitments`, `create_commitment`,
-  `update_commitment`, `delete_commitment`
-- Goals: `list_goals`, `create_goal`, `update_goal`, `delete_goal`,
-  `estimate_goal_savings`
-- Reminders: `list_reminders`, `create_reminder`, `update_reminder`,
-  `delete_reminder`
-- Analytics and Gmail imports: `financial_analytics`, `gmail_status`,
-  `sync_gmail_transactions`
-- Google Drive: `google_drive_status`, `list_drive_folders`, `import_drive_folder`,
-  `get_drive_import_job`, `list_drive_import_jobs`
-
-## Data model
-
-### Database diagram
-
-Each person's schema (`u_<id>` in the `lunafiora` database) holds these tables, drawn from the live database. Lines are foreign keys; a table without one is joined by value (a name, a date, an ID kept as text). `PK` marks primary keys, `FK` foreign keys, `UK` unique columns.
-
-```mermaid
-erDiagram
-    commitments {
-        int8 id PK
-        text kind
-        text name
-        numeric amount
-        int2 day_of_month
-        date start_date
-        date end_date
-        bool active
-        timestamptz created_at
-    }
-    drive_connection {
-        bool singleton PK
-        text email
-        text encrypted_refresh_token
-        timestamptz connected_at
-    }
-    drive_import_files {
-        uuid job_id PK, FK
-        text file_id PK
-        text version
-        text name
-        text path
-        text outcome
-        int4 added
-        int4 matched
-        int4 rejected
-        text error
-        timestamptz created_at
-    }
-    drive_import_jobs {
-        uuid job_id PK
-        text folder_id
-        text folder_name
-        bool recursive
-        text status
-        int4 total
-        text error
-        text current_item
-        timestamptz created_at
-        timestamptz started_at
-        timestamptz finished_at
-    }
-    gmail_connections {
-        text email PK
-        text encrypted_refresh_token
-        text last_history_id
-        timestamptz last_sync_at
-        timestamptz created_at
-    }
-    gmail_imports {
-        text message_id PK
-        text email
-        text subject
-        text sender
-        timestamptz received_at
-        text status
-        text excerpt
-        int8 transaction_id FK
-        timestamptz created_at
-    }
-    goals {
-        int8 id PK
-        text name
-        numeric target_amount
-        numeric current_amount
-        date target_date
-        text priority
-        text notes
-        timestamptz created_at
-    }
-    reminders {
-        int8 id PK
-        text title
-        timestamptz due_at
-        text recurrence
-        text entity_type
-        int8 entity_id
-        bool completed
-        timestamptz created_at
-    }
-    transactions {
-        int8 id PK
-        timestamptz occurred_at
-        text kind
-        numeric amount
-        bpchar currency
-        text merchant
-        text category
-        text account
-        text notes
-        text source
-        text external_id UK
-        timestamptz created_at
-    }
-    transactions ||--o{ gmail_imports : "transaction_id"
-    drive_import_jobs ||--o{ drive_import_files : "job_id"
-```
-
-## Database UI
-
-Fiora's database is in Luna Sentia's PostgreSQL, which is not published to the host. Inspect it with
-[Adminer in Luna Sentia](https://github.com/pranjallk1995/Luna_Sentia#database-ui) at
-<http://127.0.0.1:19000>: System `PostgreSQL`, Server `luna-sentia-db`, Username
-and Database `lunafiora`, Password your `POSTGRES_PASSWORD`.
-
-## Privacy boundaries
-
-Gmail queries are restricted to recent transaction-like messages. Unknown
-messages are not treated as transactions automatically. The local Ollama prompt
-is instructed to ignore email instructions and return structured transaction
-data only. Imported Gmail excerpts are limited to 500 characters for review and
-deduplication; full email bodies are not stored.
+Releases are on the [Releases page](https://github.com/pranjallk1995/Luna_Fiora/releases). To update: `git pull`, then
+`./Luna_Sentia/luna.sh start fiora`. To run your local code and reload it as you edit:
+`./Luna_Sentia/luna.sh start --build --watch fiora`.
